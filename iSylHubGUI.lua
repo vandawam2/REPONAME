@@ -3904,7 +3904,7 @@ ElementsTable.Dropdown = (function()
             Opened = false,
             Type = "Dropdown",
             Callback = Config.Callback or function() end,
-            Search = (Config.Search == nil) and false or Config.Search,
+            Search = false,
             KeepSearch = Config.KeepSearch == true
         }
 
