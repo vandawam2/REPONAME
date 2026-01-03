@@ -1,0 +1,80 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+
+-- [[ DAFTAR REMOTE YANG DIBLOKIR ]]
+-- Kita hanya tulis nama belakangnya saja, script akan otomatis menambahkan "RE/"
+local TargetRemotes = {
+    "BaitCastVisual",       -- Animasi lempar joran
+    "CaughtFishVisual",     -- Animasi ikan loncat (Sumber Lag Utama)
+    "PlayFishingEffect",    -- Partikel air
+    "ReplicateTextEffect",  -- Text "!" di kepala
+    "BaitSpawned",          -- Pelampung muncul
+    "BaitDestroyed",        -- Pelampung hilang
+    "DisplaySystemMessage"  -- Chat kuning server
+}
+
+local function EnableAntiLag()
+    print("🛡️ MEMULAI ANTI-LAG (Path: RE/...)")
+
+    -- 1. AKSES FOLDER 'NET'
+    local success, netFolder = pcall(function()
+        return ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net
+    end)
+
+    if not success or not netFolder then
+        warn("❌ Folder 'net' tidak ditemukan! Pastikan game sudah loading.")
+        return
+    end
+
+    print("✅ Folder 'net' ditemukan.")
+
+    -- 2. EKSEKUSI PEMBLOKIRAN
+    local blockedCount = 0
+    
+    for _, name in pairs(TargetRemotes) do
+        -- KUNCI PERBAIKAN: Menambahkan "RE/" di depan nama
+        local fullName = "RE/" .. name
+        local targetRemote = netFolder:FindFirstChild(fullName)
+
+        if targetRemote then
+            -- Opsi 1: Matikan Koneksi (Safe Mode)
+            if getconnections then
+                local connections = getconnections(targetRemote.OnClientEvent)
+                if #connections > 0 then
+                    for _, conn in pairs(connections) do
+                        conn:Disable()
+                    end
+                    print("⛔ BLOCKED: " .. fullName)
+                    blockedCount = blockedCount + 1
+                end
+            
+            -- Opsi 2: Hapus Remote (Force Mode)
+            -- Jika getconnections tidak mempan, kita hapus saja objectnya
+            else
+                targetRemote.Parent = nil 
+                print("🗑️ DELETED: " .. fullName)
+                blockedCount = blockedCount + 1
+            end
+        else
+            -- Debugging: Jika masih tidak ketemu
+            -- warn("⚠️ Tidak ditemukan: " .. fullName)
+        end
+    end
+
+    -- 3. LAPORAN
+    if blockedCount > 0 then
+        print("\n🎉 SUKSES! " .. blockedCount .. " Sinyal visual telah dimatikan.")
+        pcall(function()
+            StarterGui:SetCore("SendNotification", {
+                Title = "Anti-Lag Aktif",
+                Text = blockedCount .. " Visual Player Lain Diblokir.",
+                Duration = 5
+            })
+        end)
+    else
+        warn("⚠️ Tidak ada remote yang diblokir. Cek apakah nama remote sudah benar?")
+    end
+end
+
+-- Jalankan
+EnableAntiLag()
